@@ -49,7 +49,10 @@
         };
     in {
       formatter = pkgs.alejandra;
-      packages = rec { cv = mkPackage false; default = cv; };
+      packages = rec {
+        cv = mkPackage false;
+        default = cv;
+      };
       devShell = mkPackage true;
     });
 }
