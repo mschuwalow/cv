@@ -5,26 +5,34 @@ SRC_DIR := $(PROJECT_DIR)/src
 
 MAINFILE := cv
 
+PROJECT_FILES := flake.nix flake.lock
 TEX_FILES = $(find $(SRC_DIR) -type f -name '*.tex')
 STY_FILES = $(find $(SRC_DIR) -type f -name '*.sty')
 PICTURES = $(shell echo "$(SRC_DIR)/graphics/*")
+INPUT_FILES := $(PROJECT_FILES) $(TEX_FILES) $(STY_FILES) $(PICTURES)
 
-.PHONY: fmt fmt-nix default clean out-dir
 
-default: out-dir $(OUTPUT_DIR)/$(MAINFILE).pdf
+.PHONY: default clean list-fonts
 
-fmt: fmt-nix
-
-fmt-nix:
-	nixfmt $$(find ${PROJECT_DIR} -name '*.nix')
+default: $(OUTPUT_DIR)/$(MAINFILE).pdf
 
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-out-dir:
-	@printf 'Creating output directory: $(OUTPUT_DIR)\n'
-	mkdir -p $(OUTPUT_DIR)
+list-fonts:
+	luaotfload-tool --update &&\
+	luaotfload-tool --list='*'
 
-$(OUTPUT_DIR)/$(MAINFILE).pdf: out-dir $(TEX_FILES) $(STY_FILES) $(PICTURES)
-	cd $(SRC_DIR) &&\
-	latexmk -shell-escape -interaction=nonstopmode -halt-on-error -norc -jobname=$(MAINFILE) -output-directory=$(OUTPUT_DIR) -pdf
+$(OUTPUT_DIR)/$(MAINFILE).pdf: $(INPUT_FILES)
+	rsync -a $(SRC_DIR)/ $(OUTPUT_DIR)/ &&\
+	cd $(OUTPUT_DIR) &&\
+	latexmk \
+		-quiet \
+		-g \
+		-shell-escape \
+		-synctex=1 \
+		-interaction=nonstopmode \
+		-halt-on-error \
+		-lualatex \
+		-norc \
+		-jobname=$(MAINFILE)

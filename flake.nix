@@ -1,35 +1,48 @@
 {
-  inputs.nixpkgs.url = "nixpkgs/nixos-20.09";
+  inputs.nixpkgs.url = "nixpkgs/nixpkgs-22.05-darwin";
   inputs.utils.url = "github:numtide/flake-utils";
 
-  outputs = { self, nixpkgs, utils }:
-    utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
+  outputs = {
+    self,
+    nixpkgs,
+    utils,
+  }:
+    utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
 
-        texliveEnv = pkgs.texlive.combine {
-          inherit (pkgs.texlive)
-            scheme-medium moderncv fontawesome ebgaramond fontaxes;
+      texliveEnv = pkgs.texlive.combine {
+        inherit
+          (pkgs.texlive)
+          scheme-medium
+          moderncv
+          fontawesome5
+          ebgaramond
+          multirow
+          arydshln
+          ;
+      };
+
+      mkPackage = isShell: let
+        devPackages = with pkgs;
+          lib.optionals isShell [fontconfig];
+      in
+        pkgs.stdenv.mkDerivation {
+          name = "cv";
+          src =
+            if isShell
+            then null
+            else self;
+
+          installPhase = ''
+            install -D build/cv.pdf $out/cv.pdf
+          '';
+
+          buildInputs = with pkgs;
+            [gnumake fd rsync which texliveEnv] ++ devPackages;
         };
-
-        mkPackage = isShell:
-          let
-            devPackages = with pkgs;
-              lib.optionals isShell [ nixfmt fd texstudio ];
-
-          in pkgs.stdenv.mkDerivation {
-            name = "cv";
-            src = if isShell then null else self;
-
-            installPhase = ''
-              install -D build/cv.pdf $out/cv.pdf
-            '';
-
-            buildInputs = with pkgs;
-              [ gnumake which texliveEnv ] ++ devPackages;
-          };
-      in {
-        packages = { cv = mkPackage false; };
-        devShell = mkPackage true;
-      });
+    in {
+      formatter = pkgs.alejandra;
+      packages = {cv = mkPackage false;};
+      devShell = mkPackage true;
+    });
 }

@@ -26,3 +26,4 @@ result
 
 *.pdf
 !src/figures/*.pdf
+build/
