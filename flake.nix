@@ -28,21 +28,28 @@
       in
         pkgs.stdenv.mkDerivation {
           name = "cv";
+
           src =
             if isShell
             then null
             else self;
 
+          buildInputs = with pkgs;
+            [gnumake fd rsync which texliveEnv] ++ devPackages;
+
+          preBuild = ''
+            export HOME=$(mktemp -d)
+          '';
+
           installPhase = ''
             install -D build/cv.pdf $out/cv.pdf
           '';
 
-          buildInputs = with pkgs;
-            [gnumake fd rsync which texliveEnv] ++ devPackages;
+          SOURCE_DATE_EPOCH = self.lastModified;
         };
     in {
       formatter = pkgs.alejandra;
-      packages = {cv = mkPackage false;};
+      packages = rec { cv = mkPackage false; default = cv; };
       devShell = mkPackage true;
     });
 }
