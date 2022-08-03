@@ -6,11 +6,8 @@ SRC_DIR := $(PROJECT_DIR)/src
 MAINFILE := cv
 
 PROJECT_FILES := flake.nix flake.lock
-TEX_FILES = $(find $(SRC_DIR) -type f -name '*.tex')
-STY_FILES = $(find $(SRC_DIR) -type f -name '*.sty')
-PICTURES = $(shell echo "$(SRC_DIR)/graphics/*")
-INPUT_FILES := $(PROJECT_FILES) $(TEX_FILES) $(STY_FILES) $(PICTURES)
-
+SOURCE_FILES := $(shell fd -a -t f -e tex -e sty -e png . $(SRC_DIR))
+INPUT_FILES := $(PROJECT_FILES) $(SOURCE_FILES)
 
 .PHONY: default clean list-fonts
 
